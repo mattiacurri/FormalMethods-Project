@@ -1,0 +1,44 @@
+MODULE main
+VAR
+    floor: 1..5; -- current floor
+    door: {open, closed}; -- state of the door
+    direction: {up, down, idle}; -- where the elevator is going
+    button: 1..5; -- requested floor
+
+ASSIGN
+    init(floor) := 1;
+    init(door) := open;
+    init(direction) := idle;
+    init(button) := 3;
+
+    next(floor) := case
+    (direction = up) & (floor < 5): floor + 1;
+    (direction = down) & (floor > 1): floor - 1;
+    TRUE: floor;
+    esac;
+
+    next(door) := case
+    floor = button: open;
+    TRUE: closed;
+    esac;
+
+    next(direction) := case
+        floor = button : idle;
+        button > floor & floor < 5 : up;
+        button < floor & floor > 1 : down;
+        TRUE : direction;
+    esac;
+
+    next(button) := case
+        TRUE: button;
+    esac;
+
+LTLSPEC G (door = open -> direction = idle)
+LTLSPEC G (door = open -> F(door = closed))
+LTLSPEC G (door = closed -> F(door = open))
+LTLSPEC G (direction = up -> floor != 5)
+LTLSPEC G (direction = down -> floor != 1)
+LTLSPEC G (F(floor = 4))
+LTLSPEC G (button = 3 -> F(floor = 3))
+LTLSPEC G ((floor = 1 | floor = 2 | floor = 3) & direction = up & button = 4 -> direction = up U floor = 4)
+LTLSPEC G ((floor = 5 | floor = 4 | floor = 3) & direction = down & button = 2 -> direction = down U floor = 2)
